@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Sonuçlar - YGA İrsaliye Parser{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-check-circle"></i> İşlem Sonuçları
+                </h3>
+                <div>
+                    <a href="{{ url_for('download_file', file_type='csv') }}" class="btn btn-light btn-sm me-2">
+                        <i class="bi bi-download"></i> CSV İndir
+                    </a>
+                    <a href="{{ url_for('download_file', file_type='json') }}" class="btn btn-light btn-sm">
+                        <i class="bi bi-download"></i> JSON İndir
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <i class="bi bi-files display-4"></i>
+                                <h4>{{ processed_files }}</h4>
+                                <p class="mb-0">İşlenen Dosya</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-text display-4"></i>
+                                <h4>{{ total_files }}</h4>
+                                <p class="mb-0">Toplam Dosya</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <i class="bi bi-table display-4"></i>
+                                <h4>{{ total_records }}</h4>
+                                <p class="mb-0">Çıkarılan Kayıt</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <i class="bi bi-percent display-4"></i>
+                                <h4>{{ "%.1f"|format((processed_files / total_files * 100) if total_files > 0 else 0) }}%</h4>
+                                <p class="mb-0">Başarı Oranı</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if data %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover results-table">
+                        <thead class="table-dark sticky-header">
+                            <tr>
+                                <th>Dosya Adı</th>
+                                <th>İrsaliye No</th>
+                                <th>Tarih</th>
+                                <th>Sevk Edilen Kişi</th>
+                                <th>Sevk Adresi</th>
+                                <th>Telefon</th>
+                                <th>Malzeme Kodu</th>
+                                <th>Açıklama</th>
+                                <th>Adet</th>
+                                <th>Not</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data %}
+                            <tr>
+                                <td>
+                                    <small class="text-muted">{{ row.dosya_adi[:30] }}{% if row.dosya_adi|length > 30 %}...{% endif %}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ row.irsaliye_no }}</span>
+                                </td>
+                                <td>{{ row.irsaliye_tarihi }}</td>
+                                <td>
+                                    <strong>{{ row.sevk_edilen_kisi }}</strong>
+                                </td>
+                                <td>
+                                    <small>{{ row.sevk_adresi[:50] }}{% if row.sevk_adresi|length > 50 %}...{% endif %}</small>
+                                </td>
+                                <td>
+                                    {% if row.sevk_edilen_tel %}
+                                        <a href="tel:{{ row.sevk_edilen_tel }}" class="text-decoration-none">
+                                            <i class="bi bi-telephone"></i> {{ row.sevk_edilen_tel }}
+                                        </a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <code>{{ row.malzeme_kodu }}</code>
+                                </td>
+                                <td>{{ row.malzeme_aciklama[:30] }}{% if row.malzeme_aciklama|length > 30 %}...{% endif %}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ row.adeti }}</span>
+                                </td>
+                                <td>
+                                    <small>{{ row.not_bilgileri[:40] }}{% if row.not_bilgileri|length > 40 %}...{% endif %}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if total_records > 50 %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Tabloda ilk 50 kayıt gösterilmektedir. Tüm verileri görmek için CSV veya JSON dosyasını indirin.
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Hiçbir veri çıkarılamadı. Lütfen HTML dosyalarının doğru formatta olduğundan emin olun.
+                </div>
+                {% endif %}
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Yeni Dosyalar Yükle
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Tabloyu daha responsive yapmak için
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.querySelector('.results-table');
+    if (table) {
+        // Uzun metinler için tooltip ekle
+        const cells = table.querySelectorAll('td');
+        cells.forEach(cell => {
+            if (cell.textContent.length > 30) {
+                cell.setAttribute('title', cell.textContent);
+                cell.style.cursor = 'help';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
