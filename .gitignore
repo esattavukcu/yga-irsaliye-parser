@@ -57,6 +57,7 @@ results/
 *.json
 *.html
 !templates/*.html
+!standalone_web_app.html
 
 # Logs
 *.log
