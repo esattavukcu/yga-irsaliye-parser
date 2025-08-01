@@ -32,15 +32,6 @@ python app.py
 
 Uygulama http://localhost:5000 adresinde çalışacaktır.
 
-### Heroku'ya Deploy
-
-```bash
-# Heroku CLI ile deploy
-heroku create yga-irsaliye-parser
-git add .
-git commit -m "Initial commit"
-git push heroku main
-```
 
 ## Kullanım
 
